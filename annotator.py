@@ -1,4 +1,3 @@
-
 import logging
 import os
 import random
@@ -6,7 +5,8 @@ import shutil
 import sys
 import traceback
 import urllib.request
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 import datetime as _dt
@@ -70,6 +70,22 @@ class Detection:
     bbox: Tuple[float, float, float, float]
     score: float
     mask: Optional[np.ndarray]
+
+    def to_dict(self):
+        return {
+            "bbox": self.bbox,
+            "score": self.score,
+            # Mask skipped for JSON cache as it's heavy and unused for YOLO
+            "mask": None 
+        }
+
+    @staticmethod
+    def from_dict(d):
+        return Detection(
+            bbox=tuple(d["bbox"]),
+            score=d["score"],
+            mask=None
+        )
 
 def auto_device(preferred: Optional[str] = None) -> str:
     try:
@@ -201,6 +217,22 @@ class HeadlessAnnotator:
         else:
             logger.error("SAM3 libraries not found! This script requires SAM3.")
 
+    def _load_cache(self, cache_file: Path) -> Dict:
+        if cache_file.exists():
+            try:
+                with open(cache_file, "r") as f:
+                    return json.load(f)
+            except Exception:
+                return {}
+        return {}
+
+    def _save_cache(self, cache_file: Path, cache_data: Dict):
+        try:
+            with open(cache_file, "w") as f:
+                json.dump(cache_data, f, indent=2)
+        except Exception as e:
+            logger.warning(f"Failed to save cache: {e}")
+
     def process_folder(self, folder_path: str, prompt_text: str, output_dir: str, limit: Optional[int] = None) -> Optional[Path]:
         if not self.sam3:
             logger.error("SAM3 not loaded. Cannot process.")
@@ -220,12 +252,41 @@ class HeadlessAnnotator:
         records = {}
         logger.info(f"Found {len(paths)} images. Processing with prompt: '{prompt_text}'")
 
+        # Caching Logic
+        cache_file = folder / ".annotations_cache.json"
+        cache_data = self._load_cache(cache_file)
+        
         for idx, path in enumerate(paths, 1):
-            logger.info(f"Processing {idx}/{len(paths)}: {path.name}")
-            dets = self._process_image(path, prompt_text)
+            rel_path = path.name # Simple key for now, could be relative path
+            mtime = path.stat().st_mtime
+            
+            # Check Cache
+            cached_entry = cache_data.get(rel_path)
+            used_cache = False
+            dets = []
+
+            if cached_entry and cached_entry.get("mtime") == mtime and prompt_text in cached_entry.get("results", {}):
+                dets_raw = cached_entry["results"][prompt_text]
+                dets = [Detection.from_dict(d) for d in dets_raw]
+                used_cache = True
+                logger.info(f"Processing {idx}/{len(paths)}: {path.name} (Cached) - Found {len(dets)} {prompt_text}")
+            else:
+                logger.info(f"Processing {idx}/{len(paths)}: {path.name}")
+                dets = self._process_image(path, prompt_text)
+                if dets is not None:
+                    logger.info(f"   -> Found {len(dets)} instances of '{prompt_text}'")
+                    # Update Cache
+                    if rel_path not in cache_data:
+                        cache_data[rel_path] = {"mtime": mtime, "results": {}}
+                    cache_data[rel_path]["mtime"] = mtime # Update mtime in case it changed
+                    cache_data[rel_path]["results"][prompt_text] = [d.to_dict() for d in dets]
+            
             if dets is not None:
                 records[path] = {"detections": dets}
         
+        # Save updated cache
+        self._save_cache(cache_file, cache_data)
+
         if not records:
             logger.warning("No detections made.")
             return None
