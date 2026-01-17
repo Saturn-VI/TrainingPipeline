@@ -98,7 +98,7 @@ class Trainer:
                 lrf=0.01,
                 cos_lr=True,
                 patience=PATIENCE,
-                cache="ram",
+                cache="disk",
                 # Augmentations
                 hsv_h=0.02, hsv_s=0.6, hsv_v=0.4,
                 degrees=3.0, translate=0.07, scale=0.4,
