@@ -106,7 +106,9 @@ class Trainer:
                 mixup=0.1, copy_paste=0.1, erasing=0.2,
                 name=run_name,
                 exist_ok=False,
-                deterministic=False
+                deterministic=False,
+                save=True,
+                save_period=25 # save every 25 epochs
             )
         except Exception as e:
             logger.error(f"Training failed: {e}")
