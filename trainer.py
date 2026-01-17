@@ -61,13 +61,14 @@ class Trainer:
         else:
             logger.warning("CUDA not available. Training will be slow.")
 
-    def train(self, data_yaml_path: str, export_root: str):
+    def train(self, data_yaml_path: str, export_root: str, runs_root: str):
         data_yaml = Path(data_yaml_path)
         if not data_yaml.exists():
             logger.error(f"Data YAML not found: {data_yaml}")
             return
 
         export_root_path = Path(export_root)
+        runs_path = Path(runs_root)
         
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         run_name = f"pipeline_run_{timestamp}"
@@ -77,6 +78,8 @@ class Trainer:
         archive_dir = export_root_path / run_name
         archive_dir.mkdir(parents=True, exist_ok=True)
         latest_dir = export_root_path / "latest"
+
+        runs_path.mkdir(exist_ok=True)
         
         # Load Model
         logger.info(f"Loading model: {self.base_model}")
@@ -108,7 +111,8 @@ class Trainer:
                 exist_ok=False,
                 deterministic=False,
                 save=True,
-                save_period=25 # save every 25 epochs
+                save_period=25, # save every 25 epochs,
+                project=runs_path
             )
         except Exception as e:
             logger.error(f"Training failed: {e}")

@@ -81,7 +81,12 @@ def main():
     trainer = Trainer(base_model=args.model, epochs=args.epochs)
     
     export_root = base_dir / "exports"
-    trainer.train(data_yaml_path=str(data_yaml), export_root=str(export_root))
+    runs_root = base_dir / "runs"
+    trainer.train(
+        data_yaml_path=str(data_yaml),
+        export_root=str(export_root),
+        runs_root=str(runs_root)
+    )
 
 if __name__ == "__main__":
     import multiprocessing

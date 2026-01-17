@@ -13,6 +13,7 @@ ENV/
 datasets/
 exports/
 FuelImgs/
+runs/
 
 # Weights and Logs
 *.pt
