@@ -1,0 +1,21 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Project specific
+datasets/
+exports/
+FuelImgs/
+
+# Weights and Logs
+*.pt
+*.log
+*.err
+yolo11n.pt
