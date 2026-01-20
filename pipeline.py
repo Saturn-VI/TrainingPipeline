@@ -31,7 +31,7 @@ def main():
 
     parser.add_argument("--input-images", type=str, default=str(default_imgs), help="Path to folder containing images")
     parser.add_argument("--prompt", type=str, default="yellow ball", help="Text prompt for SAM3 auto-labeling")
-    parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=1000, help="Number of training epochs")
     parser.add_argument("--limit", type=int, default=None, help="Limit the number of images to process")
     parser.add_argument("--device", type=str, default=None, help="Device (cuda/cpu)")
     parser.add_argument("--model", type=str, default=str(default_model), help="YOLO model to start from")
