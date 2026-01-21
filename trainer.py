@@ -24,7 +24,7 @@ DEFAULT_BASE_MODEL = "yolo11n.pt"
 IMG_SIZE = 640
 BATCH = 16
 PATIENCE = 100
-WORKERS = mp.cpu_count()
+WORKERS = min(40, mp.cpu_count())
 DEVICE = 0
 SAVE_PERIOD = 50 # save every 50 epochs along with best.pt and last.pt
 
