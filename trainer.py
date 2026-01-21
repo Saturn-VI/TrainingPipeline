@@ -138,26 +138,8 @@ class Trainer:
             logger.error("best.pt not found. Training failed.")
             return
 
-        logger.info("Exporting FP16 TFLite...")
-        # Suppress TF warnings for export
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" 
-        try:
-            # Force YOLO export
-            export_model = YOLO(best_pt)
-            export_model.export(format="tflite", imgsz=IMG_SIZE, half=True)
-        except Exception as e:
-            logger.error(f"Export failed: {e}")
-            logger.error(traceback.format_exc())
-            # Continue to save .pt at least
-
-        tflite_files = sorted(weights_dir.rglob("*.tflite"), key=lambda p: str(p))
-        best_tflite = tflite_files[0] if tflite_files else None
-
         # Archive best.pt
         shutil.copy(best_pt, archive_dir / "best.pt")
-        
-        if best_tflite:
-            shutil.copy(best_tflite, archive_dir / "model.tflite")
 
         # Update Latest
         if latest_dir.exists():
@@ -168,8 +150,6 @@ class Trainer:
         latest_dir.mkdir(exist_ok=True)
 
         shutil.copy(best_pt, latest_dir / "best.pt")
-        if best_tflite:
-            shutil.copy(best_tflite, latest_dir / "model.tflite")
             
         # Copy plots to latest
         latest_plots = latest_dir / "plots"
