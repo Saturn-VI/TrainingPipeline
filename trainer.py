@@ -26,6 +26,7 @@ BATCH = 16
 PATIENCE = 100
 WORKERS = mp.cpu_count()
 DEVICE = 0
+SAVE_PERIOD = 50 # save every 50 epochs along with best.pt and last.pt
 
 def version_tuple(version: str) -> tuple[int, int, int]:
     parts = []
@@ -111,7 +112,7 @@ class Trainer:
                 exist_ok=False,
                 deterministic=False,
                 save=True,
-                save_period=25, # save every 25 epochs,
+                save_period=SAVE_PERIOD,
                 project=runs_path
             )
         except Exception as e:
